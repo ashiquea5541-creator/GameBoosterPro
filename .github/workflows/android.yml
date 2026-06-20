@@ -15,12 +15,14 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         
-      - name: Build with Error Catch
-        run: |
-          ./gradlew assembleDebug --stacktrace || (echo "=== LAST 100 LINES OF ERROR ===" && tail -100 /home/runner/.gradle/daemon/*/daemon-*.out.log && exit 1)
-          
-      - uses: actions/upload-artifact@v4
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+        
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+        
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: warn
