@@ -4,45 +4,25 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#000000"
-    android:padding="16dp">
+    android:gravity="center"
+    android:padding="24dp">
 
     <TextView
-        android:id="@+id/statusText"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Status: READY"
+        android:text="GAME BOOSTER PRO"
         android:textColor="#00FF00"
-        android:textSize="20sp"
-        android:gravity="center"
-        android:padding="10dp" />
+        android:textSize="24sp"
+        android:layout_marginBottom="20dp" />
 
     <TextView
         android:id="@+id/rootText"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ROOT: CHECKING..."
-        android:textColor="#FF0000"
-        android:textSize="16sp"
-        android:gravity="center" />
-
-    <TextView
-        android:id="@+id/ramText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Free RAM: 0 MB"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
-        android:gravity="center" />
-
-    <TextView
-        android:id="@+id/pingText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Ping: 0 ms"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:gravity="center"
-        android:paddingBottom="20dp" />
+        android:layout_marginBottom="30dp" />
 
     <Button
         android:id="@+id/gameModeBtn"
@@ -50,13 +30,15 @@
         android:layout_height="wrap_content"
         android:text="START GAME MODE"
         android:background="#FF0000"
-        android:textColor="#FFFFFF" />
+        android:textColor="#FFFFFF"
+        android:padding="12dp" />
 
     <Button
         android:id="@+id/bubbleBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="SHOW BUBBLE"
-        android:layout_marginTop="10dp" />
+        android:text="SHOW FPS BUBBLE"
+        android:layout_marginTop="16dp"
+        android:padding="12dp" />
 
 </LinearLayout>
