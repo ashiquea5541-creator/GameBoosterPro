@@ -3,35 +3,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.gameboosterpro.app">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- ========== PERMISSIONS ========== -->
+    <!-- Overlay Bubble ke liye -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    
+    <!-- Ping Monitor ke liye -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Kill Processes ke liye -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    
+    <!-- Root commands ke liye -->
+    <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
+    
+    <!-- Service ke liye -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-
-    <application
-        android:allowBackup="true"
-        android:label="GameBooster Pro"
-        android:theme="@style/Theme.Material3.DayNight.NoActionBar"
-        android:supportsRtl="true"
-        tools:targetApi="34">
-        
-        <activity 
-            android:name=".MainActivity" 
-            android:exported="true"
-            android:theme="@style/Theme.Material3.DayNight.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <service 
-            android:name=".FloatingService" 
-            android:exported="false"
-            android:foregroundServiceType="specialUse" />
-
-    </application>
-</manifest>
+    
+    <!-- Boot pe start karne ke liye optional -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <!-- Android 13+ notification permission -->
+    <uses
