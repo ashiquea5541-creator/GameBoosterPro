@@ -1,63 +1,90 @@
 package com.gameboosterpro.app;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
+import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
-import android.widget.Toast;
-import java.io.DataOutputStream;
+import androidx.core.app.NotificationCompat;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FloatingService extends Service {
-    private WindowManager windowManager;
-    private View floatingView;
-    private View expandedView;
-    private WindowManager.LayoutParams params;
-    private boolean isExpanded = false;
-    private boolean aimbotOn = false;
-    private boolean headshotOn = false;
-    private boolean noRecoilOn = false;
-    private boolean wallhackOn = false;
-    private boolean unlocked = false;
 
-    @Override
-    public IBinder onBind(Intent intent) { return null; }
+    private WindowManager windowManager;
+    private View bubbleView;
+    private TextView tvBubblePing;
+    private WindowManager.LayoutParams params;
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private boolean isPingRunning = true;
+    
+    private BroadcastReceiver statusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.hasExtra("status")) {
+                // MainActivity se update aya
+            }
+        }
+    };
 
     @Override
     public void onCreate() {
         super.onCreate();
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        createNotificationChannel();
+        startForeground(1, createNotification());
         
-        floatingView = LayoutInflater.from(this).inflate(R.layout.floating_bubble, null);
-        expandedView = LayoutInflater.from(this).inflate(R.layout.floating_expanded, null);
+        bubbleView = LayoutInflater.from(this).inflate(R.layout.bubble_layout, null);
+        tvBubblePing = bubbleView.findViewById(R.id.tvBubblePing);
+        
+        int layoutFlag;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            layoutFlag = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            layoutFlag = WindowManager.LayoutParams.TYPE_PHONE;
+        }
         
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ?
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY :
-                        WindowManager.LayoutParams.TYPE_PHONE,
+                layoutFlag,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         
-        params.gravity = Gravity.TOP | Gravity.LEFT;
-        params.x = 0;
+        params.gravity = Gravity.TOP | Gravity.START;
+        params.x = 100;
         params.y = 100;
         
-        windowManager.addView(floatingView, params);
-        setupTouch();
-        setupButtons();
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        windowManager.addView(bubbleView, params);
+        
+        registerReceiver(statusReceiver, new IntentFilter("GAMEBOOSTER_UPDATE"), Context.RECEIVER_NOT_EXPORTED);
+        
+        setupBubbleTouch();
+        startPingMonitor();
     }
     
-    private void setupTouch() {
-        floatingView.setOnTouchListener(new View.OnTouchListener() {
+    private void setupBubbleTouch() {
+        bubbleView.setOnTouchListener(new View.OnTouchListener() {
             private int initialX, initialY;
             private float initialTouchX, initialTouchY;
+            private long touchStartTime;
+            
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
@@ -66,16 +93,22 @@ public class FloatingService extends Service {
                         initialY = params.y;
                         initialTouchX = event.getRawX();
                         initialTouchY = event.getRawY();
+                        touchStartTime = System.currentTimeMillis();
                         return true;
-                    case MotionEvent.ACTION_UP:
-                        if (Math.abs(event.getRawX() - initialTouchX) < 10 && Math.abs(event.getRawY() - initialTouchY) < 10) {
-                            toggleMenu();
-                        }
-                        return true;
+                        
                     case MotionEvent.ACTION_MOVE:
                         params.x = initialX + (int) (event.getRawX() - initialTouchX);
                         params.y = initialY + (int) (event.getRawY() - initialTouchY);
-                        windowManager.updateViewLayout(floatingView, params);
+                        windowManager.updateViewLayout(bubbleView, params);
+                        return true;
+                        
+                    case MotionEvent.ACTION_UP:
+                        long touchTime = System.currentTimeMillis() - touchStartTime;
+                        if (touchTime < 200) {
+                            Intent intent = new Intent(FloatingService.this, MainActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                        }
                         return true;
                 }
                 return false;
@@ -83,74 +116,69 @@ public class FloatingService extends Service {
         });
     }
     
-    private void toggleMenu() {
-        if (!isExpanded) {
-            windowManager.removeView(floatingView);
-            windowManager.addView(expandedView, params);
-            isExpanded = true;
-        } else {
-            windowManager.removeView(expandedView);
-            windowManager.addView(floatingView, params);
-            isExpanded = false;
+    private void startPingMonitor() {
+        executor.execute(() -> {
+            while (isPingRunning) {
+                try {
+                    long start = System.currentTimeMillis();
+                    Process p = Runtime.getRuntime().exec("ping -c 1 -W 1 8.8.8.8");
+                    int exit = p.waitFor();
+                    long ping = System.currentTimeMillis() - start;
+                    
+                    handler.post(() -> {
+                        if (exit == 0) {
+                            tvBubblePing.setText(ping + "ms");
+                            if (ping < 50) tvBubblePing.setBackgroundResource(R.drawable.bubble_green);
+                            else if (ping < 100) tvBubblePing.setBackgroundResource(R.drawable.bubble_yellow);
+                            else tvBubblePing.setBackgroundResource(R.drawable.bubble_red);
+                        } else {
+                            tvBubblePing.setText("--");
+                            tvBubblePing.setBackgroundResource(R.drawable.bubble_red);
+                        }
+                    });
+                    Thread.sleep(3000);
+                } catch (Exception e) {
+                    handler.post(() -> tvBubblePing.setText("Err"));
+                }
+            }
+        });
+    }
+    
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    "bubble_channel",
+                    "Game Booster Bubble",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
         }
     }
     
-    private void setupButtons() {
-        expandedView.findViewById(R.id.btnClose).setOnClickListener(v -> toggleMenu());
+    private Notification createNotification() {
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         
-        TextView tvAimbot = expandedView.findViewById(R.id.tvAimbot);
-        tvAimbot.setOnClickListener(v -> {
-            aimbotOn = !aimbotOn;
-            tvAimbot.setText("🎯 Aimbot: " + (aimbotOn ? "ON" : "OFF"));
-            runRootCommand(aimbotOn ? "setprop wrap.com.dts.freefireth aimbot_on" : "setprop wrap.com.dts.freefireth aimbot_off");
-        });
-        
-        TextView tvHeadshot = expandedView.findViewById(R.id.tvHeadshot);
-        tvHeadshot.setOnClickListener(v -> {
-            headshotOn = !headshotOn;
-            tvHeadshot.setText("🔫 Headshot: " + (headshotOn ? "ON" : "OFF"));
-            runRootCommand(headshotOn ? "settings put global headshot_mode 1" : "settings put global headshot_mode 0");
-        });
-        
-        TextView tvNoRecoil = expandedView.findViewById(R.id.tvNoRecoil);
-        tvNoRecoil.setOnClickListener(v -> {
-            noRecoilOn = !noRecoilOn;
-            tvNoRecoil.setText("💥 No Recoil: " + (noRecoilOn ? "ON" : "OFF"));
-            runRootCommand(noRecoilOn ? "echo 0 > /proc/recoil" : "echo 1 > /proc/recoil");
-        });
-        
-        TextView tvWallhack = expandedView.findViewById(R.id.tvWallhack);
-        tvWallhack.setOnClickListener(v -> {
-            if (!MainActivity.hasRoot && !unlocked) {
-                Toast.makeText(this, "❌ Root Required for Wallhack", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            wallhackOn = !wallhackOn;
-            tvWallhack.setText("👁️ Wallhack: " + (wallhackOn ? "ON" : "OFF"));
-            runRootCommand(wallhackOn ? "chmod 777 /data/data/com.dts.freefireth/" : "chmod 755 /data/data/com.dts.freefireth/");
-        });
-        
-        expandedView.findViewById(R.id.btnUnlock).setOnClickListener(v -> {
-            unlocked = true;
-            Toast.makeText(this, "✅ All Features Unlocked!", Toast.LENGTH_SHORT).show();
-        });
+        return new NotificationCompat.Builder(this, "bubble_channel")
+                .setContentTitle("Game Booster Active")
+                .setContentText("Ping monitor running")
+                .setSmallIcon(android.R.drawable.ic_menu_info_details)
+                .setContentIntent(pi)
+                .build();
     }
-    
-    private void runRootCommand(String cmd) {
-        if (!MainActivity.hasRoot) return;
-        try {
-            Process p = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(p.getOutputStream());
-            os.writeBytes(cmd + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
-        } catch (Exception e) {}
-    }
-    
+
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (floatingView != null) windowManager.removeView(floatingView);
-        if (expandedView != null && isExpanded) windowManager.removeView(expandedView);
+        isPingRunning = false;
+        executor.shutdown();
+        if (bubbleView != null) windowManager.removeView(bubbleView);
+        try { unregisterReceiver(statusReceiver); } catch (Exception e) {}
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }
