@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean pingRunning = false;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private Handler mainHandler = new Handler(Looper.getMainLooper());
+    private boolean isRequestingPermission = false; // FIX 1: LOOP BREAKER
     
     TextView tvStatus, tvPing;
     Button btnStartBubble, btnStopBubble, btnKillProcesses, btnSetDNS, btnResetDNS, btnPingTest;
@@ -52,8 +53,10 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void checkRootStatus() {
-        hasRoot = isRooted();
-        updateStatusText("Root: " + (hasRoot ? "GRANTED" : "NONE"));
+        executor.execute(() -> { // FIX 2: BACKGROUND ME CHECK
+            hasRoot = isRooted();
+            mainHandler.post(() -> updateStatusText("Root: " + (hasRoot ? "GRANTED" : "NONE")));
+        });
     }
     
     private boolean isRooted() {
@@ -269,10 +272,14 @@ public class MainActivity extends AppCompatActivity {
         return mi.availMem;
     }
     
-    // ========== BUBBLE SERVICE - FIXED ==========
+    // ========== BUBBLE SERVICE - 100% FIXED ==========
     private void startBubbleService() {
+        // FIX 3: LOOP PROTECTION
+        if (isRequestingPermission) return;
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
             updateStatusText("⚠️ Please enable overlay permission");
+            isRequestingPermission = true;
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, 1234);
@@ -291,6 +298,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        isRequestingPermission = false; // FIX 3: RESET FLAG
         if (requestCode == 1234) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
                 startService(new Intent(this, FloatingService.class));
