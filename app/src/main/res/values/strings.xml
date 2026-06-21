@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">GameBoosterPro</string>
+    <string name="app_name">Game Booster Pro</string>
+    <string name="bubble_channel">Game Booster Bubble</string>
+    <string name="bubble_notif">Ping Monitor Active</string>
 </resources>
