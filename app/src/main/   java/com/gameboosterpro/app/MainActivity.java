@@ -12,63 +12,55 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
     
-    TextView statusText, ramText, pingText, rootText;
-    Button gameModeBtn, bubbleBtn;
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        statusText = findViewById(R.id.statusText);
-        ramText = findViewById(R.id.ramText);
-        pingText = findViewById(R.id.pingText);
-        rootText = findViewById(R.id.rootText);
-        gameModeBtn = findViewById(R.id.gameModeBtn);
-        bubbleBtn = findViewById(R.id.bubbleBtn);
+        TextView rootText = findViewById(R.id.rootText);
+        Button gameModeBtn = findViewById(R.id.gameModeBtn);
+        Button bubbleBtn = findViewById(R.id.bubbleBtn);
         
         boolean root = RootUtil.isRooted();
-        rootText.setText("ROOT: " + (root ? "YES - FULL POWER" : "NO - BASIC MODE"));
+        rootText.setText(root ? "ROOT: YES - FULL MODE" : "ROOT: NO - BASIC MODE");
         
+        // Service start karo, lekin UI se connect mat karo
         startService(new Intent(this, BoosterService.class));
         
-        gameModeBtn.setOnClickListener(v -> startGameMode());
-        bubbleBtn.setOnClickListener(v -> showBubble());
-    }
-    
-    void startGameMode() {
-        try {
+        gameModeBtn.setOnClickListener(v -> {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.System.canWrite(this)) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                        Toast.makeText(this, "Permission do, phir dubara dabao", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                }
+                Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 255);
+                
+                // Bina root wale ke liye DNS setting khol do
+                if (!root && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+                    Toast.makeText(this, "Private DNS → 1.1.1.1 set karo", Toast.LENGTH_LONG).show();
+                }
+                Toast.makeText(this, "Game Mode Started", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        bubbleBtn.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (!Settings.System.canWrite(this)) {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                    intent.setData(Uri.parse("package:" + getPackageName()));
+                if (!Settings.canDrawOverlays(this)) {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + getPackageName()));
                     startActivity(intent);
-                    Toast.makeText(this, "Allow permission, then click again", Toast.LENGTH_LONG).show();
                     return;
                 }
             }
-            Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 255);
-            
-            if (RootUtil.isRooted()) {
-                statusText.setText("Status: RED MAGIC MODE + ROOT BOOST");
-            } else {
-                statusText.setText("Status: GAME MODE ACTIVE");
-            }
-        } catch (Exception e) {
-            statusText.setText("Status: ERROR");
-        }
-    }
-    
-    void showBubble() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-                Toast.makeText(this, "Allow overlay, then click again", Toast.LENGTH_LONG).show();
-                return;
-            }
-        }
-        startService(new Intent(this, BubbleService.class));
+            startService(new Intent(this, BubbleService.class));
+        });
     }
 }
