@@ -33,6 +33,7 @@ public class FloatingService extends Service {
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private Handler handler = new Handler(Looper.getMainLooper());
     private boolean isPingRunning = true;
+    private boolean isViewAdded = false; // FIX 1: DOUBLE ADD SE BACHO
     
     private BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
@@ -42,6 +43,11 @@ public class FloatingService extends Service {
             }
         }
     };
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_NOT_STICKY; // FIX 2: CRASH PE RESTART NA HO
+    }
 
     @Override
     public void onCreate() {
@@ -71,9 +77,27 @@ public class FloatingService extends Service {
         params.y = 100;
         
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        windowManager.addView(bubbleView, params);
         
-        registerReceiver(statusReceiver, new IntentFilter("GAMEBOOSTER_UPDATE"), Context.RECEIVER_NOT_EXPORTED);
+        // FIX 3: SAFE ADD VIEW
+        try {
+            if (!isViewAdded) {
+                windowManager.addView(bubbleView, params);
+                isViewAdded = true;
+            }
+        } catch (Exception e) {
+            stopSelf(); // Crash se bachao
+        }
+        
+        // FIX 4: SAFE REGISTER RECEIVER
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(statusReceiver, new IntentFilter("GAMEBOOSTER_UPDATE"), Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(statusReceiver, new IntentFilter("GAMEBOOSTER_UPDATE"));
+            }
+        } catch (Exception e) {
+            // Receiver fail ho bhi jaye to app na crash ho
+        }
         
         setupBubbleTouch();
         startPingMonitor();
@@ -99,7 +123,9 @@ public class FloatingService extends Service {
                     case MotionEvent.ACTION_MOVE:
                         params.x = initialX + (int) (event.getRawX() - initialTouchX);
                         params.y = initialY + (int) (event.getRawY() - initialTouchY);
-                        windowManager.updateViewLayout(bubbleView, params);
+                        try {
+                            windowManager.updateViewLayout(bubbleView, params);
+                        } catch (Exception e) {}
                         return true;
                         
                     case MotionEvent.ACTION_UP:
@@ -126,19 +152,31 @@ public class FloatingService extends Service {
                     long ping = System.currentTimeMillis() - start;
                     
                     handler.post(() -> {
+                        if (tvBubblePing == null) return;
                         if (exit == 0) {
                             tvBubblePing.setText(ping + "ms");
-                            if (ping < 50) tvBubblePing.setBackgroundResource(R.drawable.bubble_green);
-                            else if (ping < 100) tvBubblePing.setBackgroundResource(R.drawable.bubble_yellow);
-                            else tvBubblePing.setBackgroundResource(R.drawable.bubble_red);
+                            // FIX 5: DRAWABLE CHECK
+                            try {
+                                if (ping < 50) tvBubblePing.setBackgroundResource(R.drawable.bubble_green);
+                                else if (ping < 100) tvBubblePing.setBackgroundResource(R.drawable.bubble_yellow);
+                                else tvBubblePing.setBackgroundResource(R.drawable.bubble_red);
+                            } catch (Exception e) {
+                                tvBubblePing.setBackgroundColor(0xFF4ADE80);
+                            }
                         } else {
                             tvBubblePing.setText("--");
-                            tvBubblePing.setBackgroundResource(R.drawable.bubble_red);
+                            try {
+                                tvBubblePing.setBackgroundResource(R.drawable.bubble_red);
+                            } catch (Exception e) {
+                                tvBubblePing.setBackgroundColor(0xFFEF4444);
+                            }
                         }
                     });
                     Thread.sleep(3000);
                 } catch (Exception e) {
-                    handler.post(() -> tvBubblePing.setText("Err"));
+                    handler.post(() -> {
+                        if (tvBubblePing != null) tvBubblePing.setText("Err");
+                    });
                 }
             }
         });
@@ -173,7 +211,12 @@ public class FloatingService extends Service {
         super.onDestroy();
         isPingRunning = false;
         executor.shutdown();
-        if (bubbleView != null) windowManager.removeView(bubbleView);
+        try {
+            if (bubbleView != null && isViewAdded) {
+                windowManager.removeView(bubbleView);
+                isViewAdded = false;
+            }
+        } catch (Exception e) {}
         try { unregisterReceiver(statusReceiver); } catch (Exception e) {}
     }
 
