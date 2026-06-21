@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.gameboosterpro.app'
+    namespace 'com.gamebooster.pro'
     compileSdk 34
 
     defaultConfig {
