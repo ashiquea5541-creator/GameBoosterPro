@@ -1,74 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="32dp"
-    android:background="@color/background">
+    android:background="#0F172A">
 
-    <TextView
-        android:id="@+id/tvAppTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="@color/accent"
-        android:layout_marginBottom="8dp" />
-
-    <TextView
-        android:id="@+id/tvSubtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Gaming Performance Booster"
-        android:textSize="14sp"
-        android:textColor="@color/textSecondary"
-        android:layout_marginBottom="40dp" />
-
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Bubble Overlay: INACTIVE"
-        android:textSize="16sp"
-        android:textColor="@color/textPrimary"
-        android:layout_marginBottom="32dp" />
-
-    <Button
-        android:id="@+id/btnStartBubble"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Start Bubble Overlay"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/accent"
-        android:layout_marginBottom="12dp" />
-
-    <Button
-        android:id="@+id/btnStopBubble"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Stop Bubble Overlay"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/danger"
-        android:enabled="false"
-        android:layout_marginBottom="12dp" />
-
-    <Button
-        android:id="@+id/btnKillProcesses"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Kill Background Processes"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/textSecondary"
-        android:layout_marginBottom="24dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tap the bubble to return here. Drag to reposition."
-        android:textSize="12sp"
-        android:textColor="@color/textSecondary"
-        android:gravity="center" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvAppTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Game Booster Pro"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#38BDF8"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Checking..."
+            android:textSize="14sp"
+            android:textColor="#E2E8F0"
+            android:background="#1E293B"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvPing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ping: -- ms"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#4ADE80"
+            android:gravity="center"
+            android:background="#1E293B"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnStartBubble"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Start Bubble Overlay"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#38BDF8"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnStopBubble"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Stop Bubble Overlay"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#EF4444"
+            android:enabled="false"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnKillProcesses"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Kill Background Apps"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#F59E0B"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnSetDNS"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Set Gaming DNS (1.1.1.1)"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#8B5CF6"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnResetDNS"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Reset DNS to Default"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#64748B"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnPingTest"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Start Ping Monitor"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#10B981"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+</ScrollView>
