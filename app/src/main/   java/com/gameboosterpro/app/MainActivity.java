@@ -2,6 +2,7 @@ package com.gameboosterpro.app;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.app.ActivityManager;
+import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -12,6 +13,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
@@ -25,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean pingRunning = false;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private Handler mainHandler = new Handler(Looper.getMainLooper());
-    private boolean isRequestingPermission = false; // FIX 1: LOOP BREAKER
+    private boolean isRequestingPermission = false;
     
     TextView tvStatus, tvPing;
     Button btnStartBubble, btnStopBubble, btnKillProcesses, btnSetDNS, btnResetDNS, btnPingTest;
@@ -33,12 +35,44 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // ========== PERMISSION CHECKS PEHLE ==========
+        if (!checkAndRequestPermissions()) {
+            return; // Permission nahi hai to app band
+        }
+        
         setContentView(R.layout.activity_main);
         
         initViews();
         checkRootStatus();
         setupClickListeners();
         // startPingMonitor();  // Commented to prevent blinking
+    }
+    
+    // ========== NAYA METHOD: DONO PERMISSION CHECK ==========
+    private boolean checkAndRequestPermissions() {
+        // 1. Display over other apps
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "Please allow 'Display over other apps' for Game Booster", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+            finish();
+            return false;
+        }
+        
+        // 2. Usage Access - YE ZAROORI HAI
+        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(), getPackageName());
+        if (mode != AppOpsManager.MODE_ALLOWED) {
+            Toast.makeText(this, "Please allow 'Usage Access' to detect games", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+            finish();
+            return false;
+        }
+        
+        return true; // Dono permission mil gayi
     }
     
     private void initViews() {
@@ -53,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void checkRootStatus() {
-        executor.execute(() -> { // FIX 2: BACKGROUND ME CHECK
+        executor.execute(() -> {
             hasRoot = isRooted();
             mainHandler.post(() -> updateStatusText("Root: " + (hasRoot ? "GRANTED" : "NONE")));
         });
@@ -272,9 +306,8 @@ public class MainActivity extends AppCompatActivity {
         return mi.availMem;
     }
     
-    // ========== BUBBLE SERVICE - 100% FIXED ==========
+    // ========== BUBBLE SERVICE ==========
     private void startBubbleService() {
-        // FIX 3: LOOP PROTECTION
         if (isRequestingPermission) return;
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
@@ -298,7 +331,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        isRequestingPermission = false; // FIX 3: RESET FLAG
+        isRequestingPermission = false;
         if (requestCode == 1234) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
                 startService(new Intent(this, FloatingService.class));
