@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         checkRootStatus();
         setupClickListeners();
-        startPingMonitor();
+        // startPingMonitor();  // Commented to prevent blinking
     }
     
     private void initViews() {
@@ -56,12 +56,34 @@ public class MainActivity extends AppCompatActivity {
         updateStatusText("Root: " + (hasRoot ? "GRANTED" : "NONE"));
     }
     
+    private boolean isRooted() {
+        try {
+            Process p = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+            os.writeBytes("exit\n");
+            os.flush();
+            return p.waitFor() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
     private void updateStatusText(String msg) {
         boolean serviceRunning = isServiceRunning(FloatingService.class);
         String bubbleText = serviceRunning ? "Bubble: ACTIVE" : "Bubble: INACTIVE";
         tvStatus.setText(msg + " | " + bubbleText);
         btnStartBubble.setEnabled(!serviceRunning);
         btnStopBubble.setEnabled(serviceRunning);
+    }
+    
+    private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private void setupClickListeners() {
@@ -197,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                 resultMsg = killWithoutRoot();
             }
             
-            long freedMB = (getAvailableMemory() - startMem) / 1024 / 1024;
+            long freedMB = (getAvailableMemory() - startMem) / 1024;
             String finalMsg = resultMsg + " | +" + freedMB + "MB";
             
             mainHandler.post(() -> {
@@ -240,8 +262,49 @@ public class MainActivity extends AppCompatActivity {
         return "✅ Killed " + count + " apps";
     }
     
-    // ========== BUBBLE SERVICE ==========
+    private long getAvailableMemory() {
+        ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        am.getMemoryInfo(mi);
+        return mi.availMem;
+    }
+    
+    // ========== BUBBLE SERVICE - FIXED ==========
     private void startBubbleService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package
+            updateStatusText("⚠️ Please enable overlay permission");
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, 1234);
+            return;
+        }
+        
+        startService(new Intent(this, FloatingService.class));
+        updateStatusText("✅ Bubble: Starting...");
+    }
+    
+    private void stopBubbleService() {
+        stopService(new Intent(this, FloatingService.class));
+        updateStatusText("✅ Bubble: Stopped");
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1234) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+                startService(new Intent(this, FloatingService.class));
+                updateStatusText("✅ Bubble: ACTIVE");
+            } else {
+                updateStatusText("❌ Overlay permission denied");
+            }
+        }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        pingRunning = false;
+        executor.shutdown();
+    }
+}
