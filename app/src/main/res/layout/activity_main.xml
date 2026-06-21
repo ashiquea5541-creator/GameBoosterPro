@@ -1,104 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F172A">
+    android:orientation="vertical"
+    android:background="#000000"
+    android:padding="16dp">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/statusText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:text="Status: READY"
+        android:textColor="#00FF00"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:padding="10dp" />
 
-        <TextView
-            android:id="@+id/tvAppTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Game Booster Pro"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="#38BDF8"
-            android:layout_gravity="center"
-            android:layout_marginBottom="8dp" />
+    <TextView
+        android:id="@+id/rootText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ROOT: CHECKING..."
+        android:textColor="#FF0000"
+        android:textSize="16sp"
+        android:gravity="center" />
 
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Checking..."
-            android:textSize="14sp"
-            android:textColor="#E2E8F0"
-            android:background="#1E293B"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+    <TextView
+        android:id="@+id/ramText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Free RAM: 0 MB"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:gravity="center" />
 
-        <TextView
-            android:id="@+id/tvPing"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Ping: -- ms"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#4ADE80"
-            android:gravity="center"
-            android:background="#1E293B"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp" />
+    <TextView
+        android:id="@+id/pingText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ping: 0 ms"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:paddingBottom="20dp" />
 
-        <Button
-            android:id="@+id/btnStartBubble"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Start Bubble Overlay"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#38BDF8"
-            android:layout_marginBottom="8dp" />
+    <Button
+        android:id="@+id/gameModeBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="START GAME MODE"
+        android:background="#FF0000"
+        android:textColor="#FFFFFF" />
 
-        <Button
-            android:id="@+id/btnStopBubble"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Stop Bubble Overlay"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#EF4444"
-            android:enabled="false"
-            android:layout_marginBottom="8dp" />
+    <Button
+        android:id="@+id/bubbleBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SHOW BUBBLE"
+        android:layout_marginTop="10dp" />
 
-        <Button
-            android:id="@+id/btnKillProcesses"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Kill Background Apps"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#F59E0B"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btnSetDNS"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Set Gaming DNS (1.1.1.1)"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#8B5CF6"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btnResetDNS"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Reset DNS to Default"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#64748B"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btnPingTest"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Start Ping Monitor"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#10B981"
-            android:layout_marginTop="8dp" />
-
-    </LinearLayout>
-</ScrollView>
+</LinearLayout>
