@@ -1,7 +1,5 @@
 package com.gamebooster.pro;
-
 import java.io.File;
-
 public class RootUtil {
     public static boolean isRooted() {
         String[] paths = {"/system/app/Superuser.apk", "/sbin/su", "/system/bin/su", 
